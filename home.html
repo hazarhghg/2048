@@ -50,12 +50,236 @@
 
             
 
-<div class="jumbotron text-center">
-<h3>
-    from 2025: SchooLX sitesine hoş geldiniz
-</h3>
-<p>Oyun oyna, sosyalles sohmet et eglen keyfine bak .d</p>
-</div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Oyunu</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid white;
+        }
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="pong" width="600" height="400"></canvas>
+<div id="score">Player: 3 | Computer: 3</div>
+
+<script>
+    const canvas = document.getElementById('pong');
+    const ctx = canvas.getContext('2d');
+
+    const paddleWidth = 10, paddleHeight = 60, ballSize = 10;
+    let upArrowPressed = false, downArrowPressed = false;
+
+    const paddleSpeed = 4;
+
+    // Player and Computer paddle
+    const player = {
+        x: 0,
+        y: canvas.height / 2 - paddleHeight / 2,
+        width: paddleWidth,
+        height: paddleHeight,
+        color: "WHITE",
+        dy: 0,
+        lives: 3 // Player's lives
+    };
+
+    const computer = {
+        x: canvas.width - paddleWidth,
+        y: canvas.height / 2 - paddleHeight / 2,
+        width: paddleWidth,
+        height: paddleHeight,
+        color: "WHITE",
+        dy: 0,
+        lives: 3 // Computer's lives
+    };
+
+    const ball = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: ballSize,
+        speed: 4,
+        dx: 4,
+        dy: 4,
+        color: "WHITE"
+    };
+
+    // Draw the paddle
+    function drawPaddle(x, y, width, height, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, width, height);
+    }
+
+    // Draw the ball
+    function drawBall(x, y, radius, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Draw lives
+    function drawLives(lives, x, y) {
+        ctx.font = "18px Arial";
+        ctx.fillStyle = "WHITE";
+        ctx.fillText("Lives: " + lives, x, y);
+    }
+
+    // Move the paddles
+    function movePaddles() {
+        if (upArrowPressed && player.y > 0) {
+            player.y -= paddleSpeed;
+        }
+        if (downArrowPressed && player.y < canvas.height - player.height) {
+            player.y += paddleSpeed;
+        }
+
+        // Computer paddle AI (simple)
+        if (computer.y + computer.height / 2 < ball.y) {
+            computer.y += paddleSpeed;
+        } else if (computer.y + computer.height / 2 > ball.y) {
+            computer.y -= paddleSpeed;
+        }
+    }
+
+    // Move the ball
+    function moveBall() {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+            ball.dy = -ball.dy;
+        }
+
+        // Ball hits player paddle
+        if (ball.x - ball.radius < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) {
+            ball.dx = -ball.dx;
+        }
+
+        // Ball hits computer paddle
+        if (ball.x + ball.radius > computer.x && ball.y > computer.y && ball.y < computer.y + computer.height) {
+            ball.dx = -ball.dx;
+        }
+
+        // Ball out of bounds (reset position)
+        if (ball.x - ball.radius < 0) {
+            computer.lives--;
+            resetBall();
+        }
+        if (ball.x + ball.radius > canvas.width) {
+            player.lives--;
+            resetBall();
+        }
+
+        if (player.lives === 0 || computer.lives === 0) {
+            gameOver();
+        }
+    }
+
+    // Reset the ball to the center
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.dx = -ball.dx;
+        ball.dy = 4;
+    }
+
+    // Update the game
+    function update() {
+        movePaddles();
+        moveBall();
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawPaddle(player.x, player.y, player.width, player.height, player.color);
+        drawPaddle(computer.x, computer.y, computer.width, computer.height, computer.color);
+        drawBall(ball.x, ball.y, ball.radius, ball.color);
+
+        drawLives(player.lives, canvas.width / 4, 30);
+        drawLives(computer.lives, canvas.width * 3 / 4, 30);
+
+        document.getElementById("score").innerText = `Player: ${player.lives} | Computer: ${computer.lives}`;
+
+        requestAnimationFrame(update);
+    }
+
+    // Game Over
+    function gameOver() {
+        if (player.lives === 0) {
+            alert("Oyun Bitti! Siz Kazandınız!");
+        } else if (computer.lives === 0) {
+            alert("Oyun Bitti! Bilgisayar Kazandı!");
+        }
+        document.location.reload(); // Reload the page to restart the game
+    }
+
+    // Keydown event for moving the player paddle
+    document.addEventListener("keydown", function(event) {
+        if (event.key === "ArrowUp") {
+            upArrowPressed = true;
+        }
+        if (event.key === "ArrowDown") {
+            downArrowPressed = true;
+        }
+    });
+
+    // Keyup event for stopping the player paddle
+    document.addEventListener("keyup", function(event) {
+        if (event.key === "ArrowUp") {
+            upArrowPressed = false;
+        }
+        if (event.key === "ArrowDown") {
+            downArrowPressed = false;
+        }
+    });
+
+    // Mobile controls - touch events
+    let touchStartY = 0;
+    canvas.addEventListener('touchstart', function(event) {
+        touchStartY = event.touches[0].clientY;
+    });
+
+    canvas.addEventListener('touchmove', function(event) {
+        const touchMoveY = event.touches[0].clientY;
+        const touchDiff = touchStartY - touchMoveY;
+
+        if (touchDiff > 0 && player.y > 0) {
+            player.y -= paddleSpeed; // Move paddle up
+        } else if (touchDiff < 0 && player.y < canvas.height - player.height) {
+            player.y += paddleSpeed; // Move paddle down
+        }
+
+        touchStartY = touchMoveY;
+    });
+
+    // Start the game
+    update();
+</script>
+
+</body>
+</html>
+
 
 <ul>
         
